@@ -5,7 +5,9 @@ import { AuthModule } from './auth/auth.module';
 import { PairingModule } from './pairing/pairing.module';
 import { CellarModule } from './cellar/cellar.module';
 import { TasteProfileModule } from './taste-profile/taste-profile.module';
+import { TastingNoteModule } from './tasting-note/tasting-note.module';
 import { User, UserSchema } from './schemas/user.schema';
+import { TastingNote, TastingNoteSchema } from './schemas/tasting-note.schema';
 
 @Module({
   imports: [
@@ -20,11 +22,12 @@ import { User, UserSchema } from './schemas/user.schema';
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }, { name: TastingNote.name, schema: TastingNoteSchema }]),
     AuthModule,
     PairingModule,
     CellarModule,
     TasteProfileModule,
+    TastingNoteModule,
   ],
 })
 export class AppModule {}

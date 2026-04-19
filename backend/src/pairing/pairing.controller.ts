@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req, Headers } from '@nestjs/common';
+import { Controller, Post, Get, Query, Body, UseGuards, Req, Headers } from '@nestjs/common';
 import { PairingService } from './pairing.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -26,5 +26,16 @@ export class PairingController {
       } catch {}
     }
     return this.pairingService.generateSuggestions({ ...body, userId });
+  }
+
+  @Get('for-you')
+  @UseGuards(AuthGuard('jwt'))
+  async forYou(@Req() req: any) {
+    return this.pairingService.generateForYou(req.user.userId);
+  }
+
+  @Get('discover')
+  async discover(@Query('category') category?: string, @Query('region') region?: string) {
+    return this.pairingService.generateDiscover(category, region);
   }
 }
