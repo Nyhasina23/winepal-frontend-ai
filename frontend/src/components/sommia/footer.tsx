@@ -45,12 +45,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-perle/20 text-xs font-light">© 2026 SOMMIA. Tous droits réservés.</p>
-          <div className="flex items-center gap-2 text-perle/20 text-xs font-light">
-            <Wine className="w-3 h-3" />
-            Fait avec passion pour les amoureux du vin
+        <div className="border-t border-white/[0.06] pt-8 space-y-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-perle/20 text-xs font-light">© 2026 SOMMIA. Tous droits réservés.</p>
+            <div className="flex items-center gap-2 text-perle/20 text-xs font-light">
+              <Wine className="w-3 h-3" />
+              Fait avec passion pour les amoureux du vin
+            </div>
           </div>
+          <p className="text-perle/15 text-[11px] font-light text-center leading-relaxed">
+            L&apos;abus d&apos;alcool est dangereux pour la santé. Consommez avec modération. Recommandations IA à vocation indicative — ne constitue pas un conseil professionnel.
+          </p>
         </div>
       </div>
     </footer>
