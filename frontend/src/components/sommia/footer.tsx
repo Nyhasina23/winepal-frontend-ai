@@ -38,9 +38,9 @@ export function Footer() {
           <div>
             <h4 className="text-creme/60 text-sm font-light tracking-widest uppercase mb-4">Légal</h4>
             <ul className="space-y-2">
-              <li><a href="#" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Confidentialité</a></li>
-              <li><a href="#" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Conditions</a></li>
-              <li><a href="#" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Contact</a></li>
+              <li><Link href="/confidentialite" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Confidentialité</Link></li>
+              <li><Link href="/conditions" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Conditions</Link></li>
+              <li><Link href="/contact" className="text-perle/40 text-sm font-light hover:text-or transition-colors">Contact</Link></li>
             </ul>
           </div>
         </div>
