@@ -26,7 +26,7 @@ export default function RegisterPage() {
       const res = await api.post("/auth/register", { name, email, password });
       localStorage.setItem("sommia_token", res.data.access_token);
       localStorage.setItem("sommia_user", JSON.stringify(res.data.user));
-      router.push("/");
+      router.push("/auth/onboarding");
       router.refresh();
     } catch (err: any) {
       setError(err.response?.data?.message || "Erreur d'inscription");

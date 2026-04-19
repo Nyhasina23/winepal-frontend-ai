@@ -1,12 +1,16 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { OpenAI } from 'openai';
 import { PhotosService } from '../photos/photos.service';
+import { TasteProfileService } from '../taste-profile/taste-profile.service';
 
 @Injectable()
 export class PairingService {
   private groq: OpenAI;
 
-  constructor(private photosService: PhotosService) {
+  constructor(
+    private photosService: PhotosService,
+    private tasteProfileService: TasteProfileService,
+  ) {
     this.groq = new OpenAI({
       apiKey: process.env.GROQ_API_KEY || '',
       baseURL: 'https://api.groq.com/openai/v1',
@@ -19,8 +23,9 @@ export class PairingService {
     occasion?: string;
     budget?: string;
     preference?: string;
+    userId?: string;
   }) {
-    const systemPrompt = `Tu es WINEPAL, un sommelier expert et chef passionné.
+    const systemPrompt = `Tu es SOMMIA, un sommelier expert et chef passionné avec une connaissance approfondie des accords mets-vins.
 
 RÈGLE ABSOLUE : Retourne EXACTEMENT 3 suggestions dans un tableau JSON. Ni plus, ni moins.
 Aucun texte avant ou après le JSON. Pas de markdown. Commence par { et termine par }.
@@ -36,7 +41,14 @@ Structure JSON obligatoire :
     const budgetStr = data.budget ? `\nBudget : ${data.budget}` : '';
     const prefStr = data.preference ? `\nPréférence : ${data.preference}` : '';
 
-    const userPrompt = `${modeLabel}${occasionStr}${budgetStr}${prefStr}`;
+    let profileStr = '';
+    if (data.userId) {
+      try {
+        profileStr = await this.tasteProfileService.getPromptContext(data.userId);
+      } catch {}
+    }
+
+    const userPrompt = `${modeLabel}${occasionStr}${budgetStr}${prefStr}${profileStr ? '\n\n' + profileStr : ''}`;
 
     try {
       const response = await this.groq.chat.completions.create({

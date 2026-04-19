@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import api from "@/lib/api"
 import { useState } from "react"
-import { Search, BookmarkPlus, BookmarkCheck, Star, MapPin, Grape } from "lucide-react"
+import { Search, BookmarkPlus, BookmarkCheck, Star, MapPin, Grape, ThumbsUp, ThumbsDown } from "lucide-react"
 
 const formSchema = z.object({
   input: z.string().min(3, "Veuillez décrire votre plat ou vin"),
@@ -43,6 +43,7 @@ interface PairingFormProps {
 export function PairingForm({ mode }: PairingFormProps) {
   const [loading, setLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+  const [isPersonalized, setIsPersonalized] = useState(false)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -54,6 +55,15 @@ export function PairingForm({ mode }: PairingFormProps) {
     try {
       const res = await api.post("/pairing/suggest", { mode, ...data })
       setSuggestions(res.data.suggestions)
+      const token = localStorage.getItem("sommia_token")
+      if (token) {
+        try {
+          const profileRes = await api.get("/taste-profile/me")
+          setIsPersonalized(profileRes.data?.onboardingCompleted)
+        } catch {
+          setIsPersonalized(false)
+        }
+      }
     } catch (error) {
       console.error("Erreur lors de la génération:", error)
     } finally {
@@ -173,8 +183,16 @@ export function PairingForm({ mode }: PairingFormProps) {
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
+          {isPersonalized && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+              <p className="text-or text-sm font-light flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                Recommandations personnalisées selon votre profil gustatif
+              </p>
+            </motion.div>
+          )}
           {suggestions.map((s, i) => (
-            <ResultCard key={i} suggestion={s} mode={mode} input={form.getValues("input")} />
+            <ResultCard key={i} suggestion={s} mode={mode} input={form.getValues("input")} personalized={isPersonalized} />
           ))}
         </motion.div>
       )}
@@ -182,9 +200,10 @@ export function PairingForm({ mode }: PairingFormProps) {
   )
 }
 
-function ResultCard({ suggestion, mode, input }: { suggestion: Suggestion; mode: string; input: string }) {
+function ResultCard({ suggestion, mode, input, personalized }: { suggestion: Suggestion; mode: string; input: string; personalized?: boolean }) {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null)
   const token = typeof window !== "undefined" ? localStorage.getItem("sommia_token") : null
 
   const handleSave = async () => {
@@ -204,11 +223,29 @@ function ResultCard({ suggestion, mode, input }: { suggestion: Suggestion; mode:
     }
   }
 
+  const handleFeedback = async (rating: "like" | "dislike") => {
+    setFeedback(rating)
+    if (!token) return
+    try {
+      await api.post("/taste-profile/feedback", {
+        pairingId: `${mode}-${suggestion.name}-${Date.now()}`,
+        rating,
+      })
+    } catch {}
+  }
+
   return (
     <motion.div
       variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
     >
-      <Card className="glass overflow-hidden group rounded-none border-white/[0.06]">
+      <Card className="glass overflow-hidden group rounded-none border-white/[0.06] relative">
+        {personalized && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="text-xs font-light tracking-wide px-2 py-1 bg-or/20 text-or border border-or/30 rounded-none">
+              ✦ Personnalisé
+            </span>
+          </div>
+        )}
         <div className="relative h-48 overflow-hidden">
           <img
             src={suggestion.photoUrl}
@@ -251,20 +288,38 @@ function ResultCard({ suggestion, mode, input }: { suggestion: Suggestion; mode:
             ))}
           </ul>
 
-          <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+<div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
             <span className="text-xs text-perle/20 font-light">{suggestion.photoCredit}</span>
-            {token && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleSave}
-                disabled={saved}
-                className="text-or hover:bg-or/10 text-xs gap-1 rounded-none"
-              >
-                {saved ? <BookmarkCheck className="w-3 h-3" /> : <BookmarkPlus className="w-3 h-3" />}
-                {saved ? "Sauvegardé" : "Ma cave"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {token && (
+                <>
+                  <div className="flex items-center gap-1 mr-2">
+                    <button
+                      onClick={() => handleFeedback("like")}
+                      className={`p-1.5 rounded-none transition-all ${feedback === "like" ? "bg-or/20 text-or" : "text-perle/30 hover:text-or"}`}
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleFeedback("dislike")}
+                      className={`p-1.5 rounded-none transition-all ${feedback === "dislike" ? "bg-red-500/20 text-red-400" : "text-perle/30 hover:text-red-400"}`}
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleSave}
+                    disabled={saved}
+                    className="text-or hover:bg-or/10 text-xs gap-1 rounded-none"
+                  >
+                    {saved ? <BookmarkCheck className="w-3 h-3" /> : <BookmarkPlus className="w-3 h-3" />}
+                    {saved ? "Sauvegardé" : "Ma cave"}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
 
           {saveError && <p className="text-red-400/60 text-xs font-light">{saveError}</p>}

@@ -4,10 +4,12 @@ import { Pairing, PairingSchema } from '../schemas/pairing.schema';
 import { PairingController } from './pairing.controller';
 import { PairingService } from './pairing.service';
 import { PhotosService } from '../photos/photos.service';
+import { TasteProfileModule } from '../taste-profile/taste-profile.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Pairing.name, schema: PairingSchema }]),
+    TasteProfileModule,
   ],
   controllers: [PairingController],
   providers: [PairingService, PhotosService],

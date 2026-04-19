@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { PairingModule } from './pairing/pairing.module';
 import { CellarModule } from './cellar/cellar.module';
+import { TasteProfileModule } from './taste-profile/taste-profile.module';
 import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
@@ -23,6 +24,7 @@ import { User, UserSchema } from './schemas/user.schema';
     AuthModule,
     PairingModule,
     CellarModule,
+    TasteProfileModule,
   ],
 })
 export class AppModule {}
