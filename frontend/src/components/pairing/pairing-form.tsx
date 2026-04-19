@@ -34,6 +34,9 @@ interface Suggestion {
   badge: string
   photoUrl: string
   photoCredit: string
+  photoCreditUrl?: string
+  photoUnsplashUrl?: string
+  photoDownloadLocation?: string
   searchQuery: string
 }
 
@@ -302,7 +305,30 @@ function ResultCard({ suggestion, mode, input, personalized, onShare }: { sugges
           </ul>
 
 <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-            <span className="text-xs text-perle/20 font-light">{suggestion.photoCredit}</span>
+            <div className="flex items-center gap-2">
+              {suggestion.photoCreditUrl ? (
+                <a
+                  href={suggestion.photoCreditUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-perle/30 font-light hover:text-or/60 transition-colors"
+                >
+                  {suggestion.photoCredit}
+                </a>
+              ) : (
+                <span className="text-xs text-perle/30 font-light">{suggestion.photoCredit}</span>
+              )}
+              {suggestion.photoUnsplashUrl && (
+                <a
+                  href={suggestion.photoUnsplashUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-perle/20 font-light hover:text-perle/40 transition-colors"
+                >
+                  Unsplash
+                </a>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {token && (
                 <>

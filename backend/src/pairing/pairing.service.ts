@@ -42,7 +42,7 @@ export class PairingService {
       const suggestions = await Promise.all(
         parsed.suggestions.map(async (s: any) => {
           const photo = await this.photosService.searchPhoto(s.searchQuery);
-          return { ...s, photoUrl: photo.url, photoCredit: photo.credit };
+          return { ...s, photoUrl: photo.url, photoCredit: photo.credit, photoCreditUrl: photo.creditUrl, photoUnsplashUrl: photo.unsplashUrl, photoDownloadLocation: photo.downloadLocation };
         }),
       );
 
@@ -227,7 +227,7 @@ ${theme} Varie les styles, régions et prix.`;
     const suggestions = await Promise.all(
       fallbacks.map(async (s) => {
         const photo = await this.photosService.searchPhoto(s.searchQuery);
-        return { ...s, photoUrl: photo.url, photoCredit: photo.credit };
+        return { ...s, photoUrl: photo.url, photoCredit: photo.credit, photoCreditUrl: photo.creditUrl, photoUnsplashUrl: photo.unsplashUrl, photoDownloadLocation: photo.downloadLocation };
       }),
     );
 

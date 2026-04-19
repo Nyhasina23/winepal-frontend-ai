@@ -6,6 +6,7 @@ import { PairingModule } from './pairing/pairing.module';
 import { CellarModule } from './cellar/cellar.module';
 import { TasteProfileModule } from './taste-profile/taste-profile.module';
 import { TastingNoteModule } from './tasting-note/tasting-note.module';
+import { PhotosModule } from './photos/photos.module';
 import { User, UserSchema } from './schemas/user.schema';
 import { TastingNote, TastingNoteSchema } from './schemas/tasting-note.schema';
 
@@ -28,6 +29,7 @@ import { TastingNote, TastingNoteSchema } from './schemas/tasting-note.schema';
     CellarModule,
     TasteProfileModule,
     TastingNoteModule,
+    PhotosModule,
   ],
 })
 export class AppModule {}

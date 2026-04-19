@@ -13,6 +13,10 @@ interface ShareModalProps {
     explanation: string
     badge: string
     photoUrl: string
+    photoCredit?: string
+    photoCreditUrl?: string
+    photoUnsplashUrl?: string
+    photoDownloadLocation?: string
   }
   input: string
   mode: string
@@ -28,6 +32,13 @@ export function ShareModal({ suggestion, input, mode, onClose }: ShareModalProps
     setCapturing(true)
     try {
       await captureAndDownload(suggestion, input, mode)
+      if (suggestion.photoDownloadLocation) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/photos/download`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ downloadLocation: suggestion.photoDownloadLocation }),
+        }).catch(() => {})
+      }
     } catch (err) {
       console.error("Download error:", err)
     } finally {
@@ -86,7 +97,20 @@ export function ShareModal({ suggestion, input, mode, onClose }: ShareModalProps
                   <span className="w-1 h-1 bg-or rounded-full" />
                   {suggestion.grape}
                 </div>
-                <span className="text-[10px] tracking-[0.2em] uppercase text-or/50 font-light">SOMMIA</span>
+                <div className="flex items-center gap-2">
+                  {suggestion.photoCreditUrl ? (
+                    <a href={suggestion.photoCreditUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-perle/30 font-light hover:text-or/50 transition-colors">
+                      {suggestion.photoCredit}
+                    </a>
+                  ) : (
+                    <span className="text-[10px] text-perle/30 font-light">{suggestion.photoCredit}</span>
+                  )}
+                  {suggestion.photoUnsplashUrl && (
+                    <a href={suggestion.photoUnsplashUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-perle/25 font-light hover:text-perle/40 transition-colors">
+                      Unsplash
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
