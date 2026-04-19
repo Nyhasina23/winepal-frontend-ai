@@ -50,6 +50,7 @@ export async function captureAndDownload(suggestion: {
   explanation: string
   badge: string
   photoUrl: string
+  photoCredit?: string
 }, input: string, mode: string): Promise<boolean> {
   const W = 1080
   const H = 1920
@@ -187,6 +188,12 @@ export async function captureAndDownload(suggestion: {
   ctx.font = "300 18px Georgia, serif"
   ctx.fillStyle = "#666"
   ctx.fillText("sommia.vercel.app", W / 2, footerY + 100)
+
+  if (suggestion.photoCredit) {
+    ctx.font = "300 14px Georgia, serif"
+    ctx.fillStyle = "#444"
+    ctx.fillText(suggestion.photoCredit, W / 2, footerY + 124)
+  }
 
   ctx.textAlign = "left"
 

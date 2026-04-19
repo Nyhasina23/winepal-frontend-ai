@@ -17,6 +17,9 @@ interface Suggestion {
   characteristics: string[]
   badge: string
   photoUrl: string
+  photoCredit?: string
+  photoCreditUrl?: string
+  photoUnsplashUrl?: string
 }
 
 const CATEGORIES = [
@@ -173,6 +176,20 @@ export default function DiscoverPage() {
                         </li>
                       ))}
                     </ul>
+                    <div className="flex items-center justify-between pt-2 mt-1">
+                      {s.photoCreditUrl ? (
+                        <a href={s.photoCreditUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-perle/25 font-light hover:text-or/40 transition-colors">
+                          {s.photoCredit}
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-perle/25 font-light">{s.photoCredit}</span>
+                      )}
+                      {s.photoUnsplashUrl && (
+                        <a href={s.photoUnsplashUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-perle/20 font-light hover:text-perle/40 transition-colors">
+                          Unsplash
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </motion.div>

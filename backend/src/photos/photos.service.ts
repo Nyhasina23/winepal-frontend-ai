@@ -21,17 +21,34 @@ export class PhotosService {
         const photo = response.data.results[0];
         return {
           url: photo.urls.regular,
-          credit: `Photo by ${photo.user.name} on Unsplash`,
+          credit: `Photo by ${photo.user.name}`,
+          creditUrl: `${photo.user.links.html}?utm_source=sommia&utm_medium=referral`,
+          unsplashUrl: `https://unsplash.com/?utm_source=sommia&utm_medium=referral`,
+          downloadLocation: photo.links?.download_location || null,
         };
       }
     } catch (error) {
-      // Fallback to generic wine/food photos
       console.error('Unsplash error:', error.message);
     }
 
     return {
       url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800',
-      credit: 'Photo by WINEPAL',
+      credit: 'SOMMIA',
+      creditUrl: null,
+      unsplashUrl: null,
+      downloadLocation: null,
     };
+  }
+
+  async triggerDownload(downloadLocation: string) {
+    try {
+      await axios.get(downloadLocation, {
+        headers: {
+          Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
+        },
+      });
+    } catch (error) {
+      console.error('Unsplash download trigger error:', error.message);
+    }
   }
 }
