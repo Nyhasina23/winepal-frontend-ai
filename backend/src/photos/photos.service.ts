@@ -33,9 +33,9 @@ export class PhotosService {
 
     return {
       url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=800',
-      credit: 'SOMMIA',
-      creditUrl: null,
-      unsplashUrl: null,
+      credit: 'Photo by ELEVATE',
+      creditUrl: 'https://unsplash.com/@elevate?utm_source=sommia&utm_medium=referral',
+      unsplashUrl: 'https://unsplash.com/?utm_source=sommia&utm_medium=referral',
       downloadLocation: null,
     };
   }
