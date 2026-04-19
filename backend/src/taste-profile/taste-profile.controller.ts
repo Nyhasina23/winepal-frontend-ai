@@ -10,8 +10,16 @@ export class TasteProfileController {
   @UseGuards(AuthGuard('jwt'))
   async saveQuiz(
     @Req() req: any,
-    @Body()
-    body: {
+    @Body() body: {
+      preferences?: {
+        wineTypes?: string[];
+        regions?: string[];
+        flavors?: string[];
+        budget?: string;
+        bodyPreference?: string;
+        sweetnessPreference?: string;
+        avoid?: string[];
+      };
       wineTypes?: string[];
       regions?: string[];
       flavors?: string[];
@@ -22,7 +30,16 @@ export class TasteProfileController {
     },
   ) {
     const userId = req.user.userId;
-    return this.tasteProfileService.saveQuiz(userId, body);
+    const data = body.preferences || body;
+    return this.tasteProfileService.saveQuiz(userId, {
+      wineTypes: data.wineTypes,
+      regions: data.regions,
+      flavors: data.flavors,
+      budget: data.budget,
+      bodyPreference: data.bodyPreference,
+      sweetnessPreference: data.sweetnessPreference,
+      avoid: data.avoid,
+    });
   }
 
   @Get('me')
