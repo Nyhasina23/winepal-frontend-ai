@@ -181,19 +181,21 @@ export function PairingForm({ mode }: PairingFormProps) {
           initial="hidden"
           animate="visible"
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+className="space-y-6"
         >
           {isPersonalized && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-              <p className="text-or text-sm font-light flex items-center gap-2">
-                <Star className="w-4 h-4" />
-                Recommandations personnalisées selon votre profil gustatif
+            <div className="flex items-center gap-2 px-1">
+              <span className="w-1.5 h-1.5 bg-or rounded-full animate-pulse" />
+              <p className="text-or/80 text-xs font-light tracking-wide">
+                Recommandations personnalisées selon votre profil
               </p>
-            </motion.div>
+            </div>
           )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {suggestions.map((s, i) => (
             <ResultCard key={i} suggestion={s} mode={mode} input={form.getValues("input")} personalized={isPersonalized} />
           ))}
+          </div>
         </motion.div>
       )}
     </div>
