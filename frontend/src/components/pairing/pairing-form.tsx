@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import api from "@/lib/api"
 import { useState } from "react"
-import { Search, BookmarkPlus, BookmarkCheck, Star, MapPin, Grape, ThumbsUp, ThumbsDown } from "lucide-react"
+import { ShareModal } from "@/components/sommia/share-modal"
+import { Search, BookmarkPlus, BookmarkCheck, Star, MapPin, Grape, ThumbsUp, ThumbsDown, Share2 } from "lucide-react"
 
 const formSchema = z.object({
   input: z.string().min(3, "Veuillez décrire votre plat ou vin"),
@@ -44,6 +45,7 @@ export function PairingForm({ mode }: PairingFormProps) {
   const [loading, setLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [isPersonalized, setIsPersonalized] = useState(false)
+  const [shareSuggestion, setShareSuggestion] = useState<Suggestion | null>(null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -193,16 +195,25 @@ className="space-y-6"
           )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {suggestions.map((s, i) => (
-            <ResultCard key={i} suggestion={s} mode={mode} input={form.getValues("input")} personalized={isPersonalized} />
+            <ResultCard key={i} suggestion={s} mode={mode} input={form.getValues("input")} personalized={isPersonalized} onShare={setShareSuggestion} />
           ))}
           </div>
         </motion.div>
+      )}
+
+      {shareSuggestion && (
+        <ShareModal
+          suggestion={shareSuggestion}
+          input={form.getValues("input") || ""}
+          mode={mode}
+          onClose={() => setShareSuggestion(null)}
+        />
       )}
     </div>
   )
 }
 
-function ResultCard({ suggestion, mode, input, personalized }: { suggestion: Suggestion; mode: string; input: string; personalized?: boolean }) {
+function ResultCard({ suggestion, mode, input, personalized, onShare }: { suggestion: Suggestion; mode: string; input: string; personalized?: boolean; onShare: (s: Suggestion) => void }) {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null)
@@ -307,6 +318,13 @@ function ResultCard({ suggestion, mode, input, personalized }: { suggestion: Sug
                       className={`p-1.5 rounded-none transition-all ${feedback === "dislike" ? "bg-red-500/20 text-red-400" : "text-perle/30 hover:text-red-400"}`}
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => onShare(suggestion)}
+                      className="p-1.5 text-perle/30 hover:text-or transition-all"
+                      title="Partager"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <Button
