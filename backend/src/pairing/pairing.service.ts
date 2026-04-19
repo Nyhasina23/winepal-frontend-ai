@@ -17,6 +17,42 @@ export class PairingService {
     });
   }
 
+  private async callGroq(systemPrompt: string, userPrompt: string, fallbackData: any) {
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.8,
+        max_tokens: 2000,
+      });
+
+      const content = response.choices?.[0]?.message?.content;
+      if (!content) return fallbackData;
+
+      const cleaned = content.replace(/^```(?:json)?\n?/gm, '').replace(/```$/gm, '').trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return fallbackData;
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) return fallbackData;
+
+      const suggestions = await Promise.all(
+        parsed.suggestions.map(async (s: any) => {
+          const photo = await this.photosService.searchPhoto(s.searchQuery);
+          return { ...s, photoUrl: photo.url, photoCredit: photo.credit };
+        }),
+      );
+
+      return { suggestions };
+    } catch (error: any) {
+      console.warn('Groq error, using fallback:', error.message);
+      return fallbackData;
+    }
+  }
+
   async generateSuggestions(data: {
     mode: 'dish-to-wine' | 'wine-to-dish';
     input: string;
@@ -50,50 +86,72 @@ Structure JSON obligatoire :
 
     const userPrompt = `${modeLabel}${occasionStr}${budgetStr}${prefStr}${profileStr ? '\n\n' + profileStr : ''}`;
 
+    return this.callGroq(systemPrompt, userPrompt, this.getFallbackSuggestions(data));
+  }
+
+  async generateForYou(userId: string) {
+    let profileStr = '';
     try {
-      const response = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.8,
-        max_tokens: 2000,
-      });
+      profileStr = await this.tasteProfileService.getPromptContext(userId);
+    } catch {}
 
-      const content = response.choices?.[0]?.message?.content;
-      if (!content) {
-        console.warn('Groq returned no content, using fallback');
-        return this.getFallbackSuggestions(data);
-      }
-
-      const cleaned = content.replace(/^```(?:json)?\n?/gm, '').replace(/```$/gm, '').trim();
-      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.warn('No JSON found in Groq response, using fallback');
-        console.warn('Raw response:', content.substring(0, 200));
-        return this.getFallbackSuggestions(data);
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-
-      if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
-        console.warn('Invalid Groq response format, using fallback');
-        return this.getFallbackSuggestions(data);
-      }
-
-      const suggestions = await Promise.all(
-        parsed.suggestions.map(async (s: any) => {
-          const photo = await this.photosService.searchPhoto(s.searchQuery);
-          return { ...s, photoUrl: photo.url, photoCredit: photo.credit };
-        }),
-      );
-
-      return { suggestions };
-    } catch (error: any) {
-      console.warn('Groq error, using fallback:', error.message);
-      return this.getFallbackSuggestions(data);
+    if (!profileStr) {
+      profileStr = "L'utilisateur n'a pas encore de profil gustatif. Propose des vins populaires et variés pour un néophyte curieux.";
     }
+
+    const systemPrompt = `Tu es SOMMIA, un sommelier expert. Génère EXACTEMENT 4 suggestions de vins personnalisées.
+
+RÈGLE ABSOLUE : Retourne EXACTEMENT 4 suggestions dans un tableau JSON. Ni plus, ni moins.
+Aucun texte avant ou après le JSON. Pas de markdown. Commence par { et termine par }.
+
+Structure JSON obligatoire :
+{"suggestions":[{"name":"","type":"","region":"","grape":"","explanation":"","characteristics":["","",""],"badge":"","searchQuery":""}]}
+
+Chaque suggestion doit être différente et surprendre l'utilisateur.`;
+
+    const userPrompt = `Propose-moi 4 vins que je devrais découvrir ce soir, en tenant compte de mes goûts.\n\n${profileStr}`;
+
+    const fallbackData = {
+      suggestions: [
+        { name: 'Chablis Premier Cru 2020', type: 'Vin blanc', region: 'Bourgogne', grape: 'Chardonnay', explanation: 'Un Chablis minéral et élégant, parfait pour découvrir la finesse des vins blancs bourguignons.', characteristics: ['Température: 10-12°C', 'Potentiel de garde: 5-8 ans', 'Accord: huîtres, sashimi'], badge: 'Coup de cœur', searchQuery: 'chablis white wine glass' },
+        { name: 'Barolo 2019', type: 'Vin rouge', region: 'Piémont', grape: 'Nebbiolo', explanation: 'Le roi des vins italiens, avec ses arômes de rose tartrée, truffe et cerise.', characteristics: ['Température: 16-18°C', 'Potentiel de garde: 15+ ans', 'À carafer 2h'], badge: 'Exceptionnel', searchQuery: 'barolo wine bottle' },
+        { name: 'Champagne Brut Réserve', type: 'Effervescent', region: 'Champagne', grape: 'Chardonnay, Pinot Noir', explanation: 'Un champagne d\'apéritif polyvalent, finesse et élégance.', characteristics: ['Température: 6-8°C', 'Millésime: non millésimé', 'Accord: apéritif, fruits de mer'], badge: 'Incontournable', searchQuery: 'champagne glass celebration' },
+        { name: 'Margaux 2018', type: 'Vin rouge', region: 'Bordeaux', grape: 'Cabernet Sauvignon, Merlot', explanation: 'Un Margaux soyeux et complexe, l\'essence du Bordeaux raffiné.', characteristics: ['Température: 16-18°C', 'Potentiel de garde: 20+ ans', 'Accord: agneau, gibier'], badge: 'Prestige', searchQuery: 'margaux bordeaux wine' },
+      ],
+    };
+
+    return this.callGroq(systemPrompt, userPrompt, fallbackData);
+  }
+
+  async generateDiscover(category?: string, region?: string) {
+    const categoryStr = category ? `Catégorie demandée : ${category}.` : '';
+    const regionStr = region ? `Région demandée : ${region}.` : '';
+    const theme = categoryStr || regionStr || 'Propose une sélection variée couvrant différents styles.';
+
+    const systemPrompt = `Tu es SOMMIA, un sommelier expert. Génère EXACTEMENT 6 suggestions de vins à découvrir.
+
+RÈGLE ABSOLUE : Retourne EXACTEMENT 6 suggestions dans un tableau JSON. Ni plus, ni moins.
+Aucun texte avant ou après le JSON. Pas de markdown. Commence par { et termine par }.
+
+Structure JSON obligatoire :
+{"suggestions":[{"name":"","type":"","region":"","grape":"","explanation":"","characteristics":["","",""],"badge":"","searchQuery":""}]}
+
+${theme} Varie les styles, régions et prix.`;
+
+    const userPrompt = `Fais-moi découvrir 6 vins passionnants. ${categoryStr} ${regionStr}`;
+
+    const fallbackData = {
+      suggestions: [
+        { name: 'Sancerre Blanc 2022', type: 'Vin blanc', region: 'Loire', grape: 'Sauvignon Blanc', explanation: 'Un Sauvignon Blanc vif et minéral, parfait pour l\'apéritif ou les fruits de mer.', characteristics: ['Température: 8-10°C', 'Jeune et frais', 'Accord: chèvre, fruits de mer'], badge: 'Découverte', searchQuery: 'sancerre white wine bottle' },
+        { name: 'Côte-Rôtie 2019', type: 'Vin rouge', region: 'Rhône', grape: 'Syrah', explanation: 'Un rouge du Nord condensé et élégant, avec des arômes de violet et épices.', characteristics: ['Température: 16-18°C', 'Garde: 10-15 ans', 'Accord: viande rouge, gibier'], badge: 'Remarquable', searchQuery: 'cote rotie rhone wine' },
+        { name: 'Prosecco Superiore DOCG', type: 'Effervescent', region: 'Vénétie', grape: 'Glera', explanation: 'Un Prosecco de qualité supérieure, frais et festif.', characteristics: ['Température: 6-8°C', 'Accord: apéritif, brunch', 'Bulles fines'], badge: 'Festif', searchQuery: 'prosecco sparkling wine' },
+        { name: 'Chinon 2021', type: 'Vin rouge', region: 'Loire', grape: 'Cabernet Franc', explanation: 'Un rouge léger et fruited sur des notes de poivron et framboise.', characteristics: ['Température: 14-16°C', 'Accord: volaille, charcuterie', 'Servir légèrement rafraîchi'], badge: 'Accessible', searchQuery: 'chinon loire wine' },
+        { name: 'Gewurztraminer 2021', type: 'Vin blanc', region: 'Alsace', grape: 'Gewurztraminer', explanation: 'Un blanc aromatique et exubérant, rose et litchi en bouche.', characteristics: ['Température: 8-10°C', 'Accord: cuisine asiatique, fromages forts', 'Moelleux'], badge: 'Original', searchQuery: 'gewurztraminer alsace wine' },
+        { name: 'Rioja Reserva 2017', type: 'Vin rouge', region: 'Rioja', grape: 'Tempranillo', explanation: 'Un rouge espagnol évolué au boisé élégant et aux tanins soyeux.', characteristics: ['Température: 16-18°C', 'Garde: 10-20 ans', 'Accord: tapas, agneau rôti'], badge: 'Classique', searchQuery: 'rioja reserva spanish wine' },
+      ],
+    };
+
+    return this.callGroq(systemPrompt, userPrompt, fallbackData);
   }
 
   private async getFallbackSuggestions(data: {
