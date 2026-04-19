@@ -22,7 +22,7 @@ export class AuthService {
     const payload = { sub: user._id.toString(), email: user.email };
     return {
       access_token: this.jwtService.sign(payload),
-      user: { id: user._id, email: user.email, name: user.name },
+      user: { id: user._id, email: user.email, name: user.name, isAdmin: !!user.isAdmin },
     };
   }
 
@@ -36,12 +36,16 @@ export class AuthService {
     const payload = { sub: user._id.toString(), email: user.email };
     return {
       access_token: this.jwtService.sign(payload),
-      user: { id: user._id, email: user.email, name: user.name },
+      user: { id: user._id, email: user.email, name: user.name, isAdmin: !!user.isAdmin },
     };
   }
 
   async validateUser(userId: string) {
     const user = await this.userModel.findById(userId).select('-password');
     return user;
+  }
+
+  async getAllUsers() {
+    return this.userModel.find().select('-password').sort({ createdAt: -1 }).lean();
   }
 }

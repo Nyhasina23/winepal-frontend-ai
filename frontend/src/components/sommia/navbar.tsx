@@ -15,6 +15,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > 50)
@@ -28,6 +29,7 @@ export function Navbar() {
       try {
         const user = JSON.parse(userStr || "{}")
         setUserName(user.name || null)
+        setIsAdmin(!!user.isAdmin)
       } catch { /* ignore */ }
     }
   }, [])
@@ -45,6 +47,7 @@ export function Navbar() {
     { href: "/", label: "Accueil" },
     { href: "/pairing", label: "Accords" },
     ...(isAuthenticated ? [{ href: "/cellar", label: "Ma Cave" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
   ]
 
   return (

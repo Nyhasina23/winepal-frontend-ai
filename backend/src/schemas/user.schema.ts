@@ -15,6 +15,9 @@ export class User extends Document {
   @Prop()
   avatar: string;
 
+  @Prop({ default: false })
+  isAdmin: boolean;
+
   @Prop({ default: Date.now })
   createdAt: Date;
 }

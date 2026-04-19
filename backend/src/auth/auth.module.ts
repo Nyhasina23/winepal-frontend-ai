@@ -3,10 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User, UserSchema } from '../schemas/user.schema';
 import { AuthController } from './auth.controller';
+import { AdminController } from './admin.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { AdminGuard } from '../common/guards/admin.guard';
 
 @Module({
   imports: [
@@ -21,8 +23,8 @@ import { JwtStrategy } from './jwt.strategy';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  controllers: [AuthController, AdminController],
+  providers: [AuthService, JwtStrategy, AdminGuard],
   exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}
